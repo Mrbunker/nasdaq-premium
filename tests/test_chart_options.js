@@ -1,0 +1,13 @@
+const assert=require('node:assert/strict');
+const createChartOptions=require('../web/chart_options.js');
+const ChartViewport=require('../web/chart_viewport.js');
+const options=createChartOptions({labels:['2026-01-05','2026-01-06','2026-01-07'],nav:[1,null,-2],close:[2,3,-1],contribution:[1,null,1],width:1100,monthly:false,initialCount:2});
+assert.equal(options.series[0].data[1].value,null,'Missing NAV must not become a zero return');
+assert.equal(options.series[2].data[1].value,null,'Missing comparison must remain a gap');
+assert.equal(options.series[0].data[0].itemStyle.borderColor,options.series[1].data[0].itemStyle.color);
+assert.notEqual(options.series[0].data[2].itemStyle.borderColor,options.series[0].data[0].itemStyle.borderColor);
+assert.equal(options.series[0].data[0].itemStyle.color,'transparent');
+assert.deepEqual(options.dataZoom[0].xAxisIndex,[0,1]);
+assert.deepEqual(options.xAxis[0].data,options.xAxis[1].data);
+const view=new ChartViewport(1000,1100,{limitByWidth:false});view.setRange(100,799);assert.equal(view.count,700);view.zoom(.8);assert.equal(view.count,560);
+console.log('Chart options: gaps, direction colors, hollow bars, aligned zoom and arbitrary history windows passed');

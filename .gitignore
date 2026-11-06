@@ -1,0 +1,12 @@
+.venv/
+.cache/
+__pycache__/
+*.py[cod]
+.DS_Store
+dist/
+charts/
+raw/
+*.zip
+data/*.csv
+.env
+.env.*

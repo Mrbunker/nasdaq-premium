@@ -1,0 +1,21 @@
+const assert = require('node:assert/strict');
+const ChartViewport = require('../web/chart_viewport.js');
+
+const view = new ChartViewport(1000, 1132, {initialCount:20});
+assert.equal(view.count,20);
+assert.equal(view.offset,980);
+view.setOffset(400);
+const anchor = view.offset + .3 * view.count;
+view.zoom(.8,.3);
+assert.equal(view.count,16);
+assert.ok(Math.abs(view.offset + .3*view.count-anchor) <= .5);
+view.pan(-10000);assert.equal(view.offset,0);
+view.pan(10000);assert.equal(view.offset,view.maxOffset);
+view.resize(358);assert.ok(view.count<=7);assert.equal(view.offset,view.maxOffset);
+view.resize(1132);view.reset();assert.equal(view.count,20);assert.equal(view.offset,980);
+for(let i=0;i<50;i++)view.zoom(.8);
+assert.equal(view.count,4);
+for(let i=0;i<50;i++)view.zoom(1.25);
+assert.equal(view.count,view.maxCount);
+const empty=new ChartViewport(0,358);empty.zoom(.8);empty.pan(10);assert.equal(empty.count,0);assert.equal(empty.offset,0);
+console.log('Chart viewport: anchored zoom, pan bounds, resizing, reset and empty data passed');

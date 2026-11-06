@@ -1,0 +1,56 @@
+name: Refresh ETF data
+
+on:
+  schedule:
+    # UTC; China time 09:30 and 18:30. Weekend runs can pick up delayed QDII NAV.
+    - cron: '30 1 * * *'
+    - cron: '30 10 * * *'
+  workflow_dispatch:
+    inputs:
+      cutoff:
+        description: 'Optional complete Chinese session cutoff (YYYY-MM-DD)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nasdaq-premium-data-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Refresh and cross-check sources
+        env:
+          NAQD_CUTOFF: ${{ inputs.cutoff }}
+        run: |
+          if [ -n "$NAQD_CUTOFF" ]; then
+            python3 scripts/update_data.py --cutoff "$NAQD_CUTOFF"
+          else
+            python3 scripts/update_data.py
+          fi
+      - name: Validate data and build website
+        run: make check
+      - name: Commit verified snapshot
+        run: |
+          git add data/history.json
+          if git diff --cached --quiet; then
+            echo "No snapshot changes"
+            exit 0
+          fi
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'chore(data): refresh ETF snapshot'
+          git pull --rebase origin main
+          git push origin HEAD:main
